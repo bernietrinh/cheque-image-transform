@@ -6,19 +6,33 @@ const rimraf = require('rimraf')
 
 let i = 0
 const scriptsPath = path.resolve(__dirname)
-const pngPath = `${scriptsPath}/png`
+const jpgPath = `${scriptsPath}/jpg`
 const localFontPath = `${scriptsPath}/font/micrenc.ttf`
 
 let fontPngPath = ''
 const progress = ['|', '/', '\\']
 
+const options = {
+  color: 20,
+  background: 30
+}
+
+process.argv.slice(2).forEach(arg => {
+  const key = _.replace(arg, /(\=\w+)/gi, '')
+  const value = _.replace(arg, /(\w+\=)/gi, '')
+  options[key] = _.parseInt(value)
+
+  console.log(`[OPTIONS] ${_.upperFirst(key)} Increments: ${value}`)
+})
+console.log('------------------------------')
+
 const createImages = () => {
   while (i < 10) {
     // create directories
-    mkdirSync(path.resolve(pngPath))
+    mkdirSync(path.resolve(jpgPath))
 
     console.log(`-- creating color combinations for ${i}...`)
-    fontPngPath = `${scriptsPath}/png/${i}`
+    fontPngPath = `${scriptsPath}/jpg/${i}`
     mkdirSync(path.resolve(fontPngPath))
 
     const combos = createColorCombos()
@@ -29,6 +43,7 @@ const createImages = () => {
       createByOpacity(combo, i)
       process.stdout.write(`\r complete: ${ci} ${progress[ci % 3]}`)
     })
+    console.log('\n------------------------------')
     i++
   }
 }
@@ -52,18 +67,18 @@ const createColorCombos = () => {
     const third = order[2]
 
     const color = {
-      [first]: 0,
-      [second]: 0,
-      [third]: 0
+      [first]: options.color,
+      [second]: options.color,
+      [third]: options.color
     }
 
     while (!complete) {
       if (color[first] < 255) {
-        color[first] += 5
+        color[first] += options.color
       } else if (color[second] < 255) {
-        color[second] += 5
+        color[second] += options.color
       } else {
-        color[third] += 5
+        color[third] += options.color
       }
 
       const { r, g, b } = color
@@ -71,8 +86,8 @@ const createColorCombos = () => {
       const combo = {
         color: `${r}, ${g}, ${b}`
       }
-      const backgrounds = _.map(Array(250 / 5), (el, i) => {
-        const number = (i * 5) + 5
+      const backgrounds = _.map(Array(_.floor(255 / options.background)), (el, i) => {
+        const number = (i * options.background) + options.background
         return `${number}, ${number}, ${number}`
       })
 
@@ -80,9 +95,9 @@ const createColorCombos = () => {
         combos.push(_.assign({ background }, combo))
       })
 
-      if (color.r === 255 &&
-        color.g === 255 &&
-        color.b === 255
+      if (color.r >= 255 &&
+        color.g >= 255 &&
+        color.b >= 255
       ) {
         complete = true
       }
@@ -99,7 +114,7 @@ const createByOpacity = (colors, number) => {
     const { color, background } = generateColors(_.assign({ opacity }, colors))
     const name = `${fontPngPath}/${number}(${_.replace(color, ' ', '')}|${_.replace(background, ' ', '')}).jpg`
 
-    // convert font to png
+    // convert font to jpg
     convert(number, name, {
       localFontPath,
       backgroundColor: `rgba(${background})`,
@@ -121,12 +136,30 @@ const generateColors = (colors) => {
 }
 
 const convert = (text, name, options) => {
-    // create png from font
-    fs.writeFileSync(name, text2png(`${text}`, Object.assign({}, {
-      localFontName: 'micrenc',
-      font: '200px micrenc',
-      padding: 10
-    }, options)))
+  const maxWidth = 325
+  const maxHeight = 325
+  const font = getRandomInt(100, 250)
+  const padHorizontal = maxWidth - font
+  const padLeft = getRandomInt(0, padHorizontal)
+  const padRight = padHorizontal - padLeft
+
+  const padVertical = maxHeight - font
+  const padTop = getRandomInt(0, padVertical)
+  const padBottom = padVertical - padTop
+
+  // create jpg from font
+  fs.writeFileSync(name, text2png(`${text}`, Object.assign({}, {
+    localFontName: 'micrenc',
+    font: `${font}px micrenc`,
+    paddingTop: padTop,
+    paddingBottom: padBottom,
+    paddingRight: padRight,
+    paddingLeft: padLeft
+  }, options)))
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min) + min)
 }
 
 const mkdirSync = dirPath => {
@@ -138,5 +171,5 @@ const mkdirSync = dirPath => {
 }
 
 console.log('initializing script...')
-console.log('- removing png dir if exists...')
-rimraf(path.resolve(pngPath), {}, createImages)
+console.log('- removing jpg dir if exists...')
+rimraf(path.resolve(jpgPath), {}, createImages)
