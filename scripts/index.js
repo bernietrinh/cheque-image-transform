@@ -3,6 +3,8 @@ const path = require('path')
 const text2png = require('text2png')
 const _ = require('lodash')
 const rimraf = require('rimraf')
+const sharp = require('sharp')
+const lock = require('lock').Lock()
 
 let i = 0
 const scriptsPath = path.resolve(__dirname)
@@ -27,7 +29,7 @@ process.argv.slice(2).forEach(arg => {
 console.log('------------------------------')
 
 const createImages = () => {
-  while (i < 10) {
+  while (i < 1) {
     // create directories
     mkdirSync(path.resolve(jpgPath))
 
@@ -39,8 +41,12 @@ const createImages = () => {
 
     console.log(`--- creating images for ${combos.length} combinations...`)
 
+    const rotations = []
+    for (let j = -10; j < 11; j++) {
+      rotations.push(j)
+    }
     _.forEach(combos, (combo, ci) => {
-      createByOpacity(combo, i)
+      createByOpacity(combo, i, rotations[ci % rotations.length])
       process.stdout.write(`\r complete: ${ci} ${progress[ci % 3]}`)
     })
     console.log('\n------------------------------')
@@ -107,7 +113,7 @@ const createColorCombos = () => {
   return combos
 }
 
-const createByOpacity = (colors, number) => {
+const createByOpacity = (colors, number, rotation) => {
   let opacity = 1
 
   // while (opacity > 0) {
@@ -119,7 +125,7 @@ const createByOpacity = (colors, number) => {
       localFontPath,
       backgroundColor: `rgba(${background})`,
       color: `rgba(${color})`
-    })
+    }, rotation)
     // opacity = Number(opacity - 0.05).toPrecision(2)
 
   // }
@@ -156,6 +162,20 @@ const convert = (text, name, options) => {
     paddingRight: padRight,
     paddingLeft: padLeft
   }, options)))
+
+//   sharp(buffer)
+//     .blur()
+//     .rotate(rotation)
+//     .toBuffer((err, data, info) => {
+//       sharp(data)
+//         .resize({ width: 224, height: 224, fit: 'cover' })
+//         .toFile(name, (err, info) => {
+//           if (err) {
+//             process.stderr.write(`Error writing image to file ${err}\n`)
+//           }
+//         })
+//
+//     })
 }
 
 function getRandomInt(min, max) {
