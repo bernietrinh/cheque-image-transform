@@ -5,10 +5,10 @@ Simple script to generate jpg images of cheque numbers (MICR Encoding) with rand
 ### Usage
 
 #### Options
-|            | type | default | min | max |
-|------------|------|---------|-----|-----|
-| color      | int  | 20      | 1   | 255 |
-| background | int  | 30      | 1   | 255 |
+| name       | type | default | min | max | description |
+|------------|------|---------|-----|-----|-------------|
+| color      | int  | 20      | 1   | 255 | font color RGB increments |
+| background | int  | 30      | 1   | 255 | background grayscale RGB increments |
 
 ```ecmascript 6
 npm install
