@@ -29,7 +29,7 @@ process.argv.slice(2).forEach(arg => {
 console.log('------------------------------')
 
 const createImages = () => {
-  while (i < 1) {
+  while (i < 10) {
     // create directories
     mkdirSync(path.resolve(jpgPath))
 
@@ -90,16 +90,19 @@ const createColorCombos = () => {
       const { r, g, b } = color
 
       const combo = {
-        color: `${r}, ${g}, ${b}`
+        color: `${r}, ${g}, ${b}`,
+        background: '255, 255, 255'
       }
-      const backgrounds = _.map(Array(_.floor(255 / options.background)), (el, i) => {
-        const number = (i * options.background) + options.background
-        return `${number}, ${number}, ${number}`
-      })
+      // const backgrounds = _.map(Array(_.floor(255 / options.background)), (el, i) => {
+      //   const number = (i * options.background) + options.background
+      //   return `${number}, ${number}, ${number}`
+      // })
+      //
+      // backgrounds.forEach(background => {
+      //   combos.push(_.assign({ background }, combo))
+      // })
 
-      backgrounds.forEach(background => {
-        combos.push(_.assign({ background }, combo))
-      })
+      combos.push(combo)
 
       if (color.r >= 255 &&
         color.g >= 255 &&
@@ -141,7 +144,7 @@ const generateColors = (colors) => {
   }
 }
 
-const convert = (text, name, options) => {
+const convert = (text, name, options, rotation) => {
   const maxWidth = 325
   const maxHeight = 325
   const font = getRandomInt(100, 250)
@@ -154,28 +157,29 @@ const convert = (text, name, options) => {
   const padBottom = padVertical - padTop
 
   // create jpg from font
-  fs.writeFileSync(name, text2png(`${text}`, Object.assign({}, {
+  const buffer = text2png(`${text}`, Object.assign({}, {
     localFontName: 'micrenc',
     font: `${font}px micrenc`,
     paddingTop: padTop,
     paddingBottom: padBottom,
     paddingRight: padRight,
     paddingLeft: padLeft
-  }, options)))
+  }, options))
 
-//   sharp(buffer)
-//     .blur()
-//     .rotate(rotation)
-//     .toBuffer((err, data, info) => {
-//       sharp(data)
-//         .resize({ width: 224, height: 224, fit: 'cover' })
-//         .toFile(name, (err, info) => {
-//           if (err) {
-//             process.stderr.write(`Error writing image to file ${err}\n`)
-//           }
-//         })
-//
-//     })
+  sharp(buffer)
+    .blur()
+    .rotate(rotation, { background: [255, 255, 255] })
+    .toBuffer((err, data, info) => {
+      sharp(data)
+        .extract({ left: 0, top: 0, width: info.width, height: info.height })
+        .resize({ width: 224, height: 224, fit: 'cover' })
+        .toFile(name, (err, info) => {
+          if (err) {
+            process.stderr.write(`Error writing image to file ${err}\n`)
+          }
+        })
+
+    })
 }
 
 function getRandomInt(min, max) {

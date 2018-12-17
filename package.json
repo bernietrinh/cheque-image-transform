@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "lock": "^1.1.0",
     "lodash": "^4.17.11",
     "pngjs": "^3.3.3",
     "react": "^16.6.3",
